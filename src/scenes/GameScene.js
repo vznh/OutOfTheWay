@@ -6,10 +6,12 @@ class GameScene extends Phaser.Scene {
 
   preload() {
     // Load the player sprite sheet using peter.png
-    this.load.spritesheet("player", "assets/peter.png", {
+    this.load.spritesheet("player", "./assets/peter.png", {
       frameWidth: 32,
       frameHeight: 32,
     });
+
+    this.load.audio("boop", "./assets/boop.mp3");
   }
 
   create() {
@@ -56,7 +58,8 @@ class GameScene extends Phaser.Scene {
       // Boundaries: player centers must stay between 16 and 304
       if (newX >= 16 && newX <= 304 && newY >= 16 && newY <= 304) {
         this.player.setPosition(newX, newY);
-        // Placeholder for move sound effect (unimplemented)
+        // Play move sound effect
+        this.sound.play("./assets/boop.mp3");
         console.log("Move sound effect should play");
       }
     });
