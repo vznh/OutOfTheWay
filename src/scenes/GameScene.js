@@ -6,7 +6,7 @@ class GameScene extends Phaser.Scene {
 
   preload() {
     // Load the player sprite sheet using peter.png
-    this.load.spritesheet("player", "./assets/peter.png", {
+    this.load.spritesheet("player", "assets/peter.png", {
       frameWidth: 32,
       frameHeight: 32,
     });
