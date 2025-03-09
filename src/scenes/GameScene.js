@@ -6,24 +6,25 @@ class GameScene extends Phaser.Scene {
 
   preload() {
     // Load the player sprite sheet using peter.png
-    this.load.spritesheet("player", "./assets/peter.png", {
-      frameWidth: 32,
-      frameHeight: 32,
+    this.load.image("player", "assets/peter.png", {
+      frameWidth: 128,
+      frameHeight: 128,
     });
 
-    this.load.audio("boop", "./assets/boop.mp3");
+    this.load.audio("boop", "assets/boop.mp3");
   }
 
   create() {
     // Set player's starting position to a random grid on left 2 columns
     const randomRow = Phaser.Math.Between(2, 7);
     const randomCol = Phaser.Math.Between(0, 1);
-    this.player = this.add.sprite(
+    this.player = this.add.image(
       16 + randomCol * 32,
       16 + randomRow * 32,
       "player",
     );
     this.physics.add.existing(this.player);
+    this.player.setScale(32 / 512);
 
     // Draw a grid overlay for visual reference
     const graphics = this.add.graphics();
@@ -37,6 +38,11 @@ class GameScene extends Phaser.Scene {
       graphics.lineTo(320, y);
     }
     graphics.strokePath();
+
+    this.input.keyboard.on("keydown-ESC", () => {
+      this.scene.start("menuScene");
+      console.log("Attempted to escape back to menu");
+    });
 
     // Listen for key presses for grid-based movement
     this.input.keyboard.on("keydown", (event) => {
@@ -59,7 +65,7 @@ class GameScene extends Phaser.Scene {
       if (newX >= 16 && newX <= 304 && newY >= 16 && newY <= 304) {
         this.player.setPosition(newX, newY);
         // Play move sound effect
-        this.sound.play("./assets/boop.mp3");
+        this.sound.play("boop");
         console.log("Move sound effect should play");
       }
     });
