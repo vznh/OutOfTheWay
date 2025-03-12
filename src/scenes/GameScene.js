@@ -11,6 +11,11 @@ class GameScene extends Phaser.Scene {
       frameHeight: 128,
     });
 
+    this.load.image("bus", "assets/bus.png", {
+      frameWidth: 128,
+      frameHeight: 128,
+    });
+
     this.load.audio("boop", "assets/boop.mp3");
   }
 
@@ -25,6 +30,21 @@ class GameScene extends Phaser.Scene {
     );
     this.physics.add.existing(this.player);
     this.player.setScale(32 / 512);
+
+    // Add 3 bus entities randomly across the grid
+    this.buses = [];
+    for (let i = 0; i < 3; i++) {
+      const busRow = Phaser.Math.Between(0, 9);
+      const busCol = Phaser.Math.Between(2, 9); // Place buses on right side of grid
+      const bus = this.add.image(
+        16 + busCol * 32,
+        16 + busRow * 32,
+        "bus"
+      );
+      bus.setScale(32 / 512);
+      this.physics.add.existing(bus);
+      this.buses.push(bus);
+    }
 
     // Draw a grid overlay for visual reference
     const graphics = this.add.graphics();
