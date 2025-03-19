@@ -3,7 +3,13 @@ This strategic puzzle game is inspired by the minigame within [BitLife](https://
 
 The live production link can be found at my [GitHub root](https://vznh.github.io/OutOfTheWay).
 
-This is made for CMPM120, and is the final project. Built using TypeScript, Phaser, and publicly available stock images.
+This is made for CMPM120, and is the final project. Built using JavaScript, Phaser, and publicly available stock images.
+
+## Problems
+- I couldn't use TypeScript. I think game dev TypeScript and swe TypeScript are crazily different.
+- Art was scarce. https://aistudio.google.com and its experimental mode was my lifeline. (sorry artists..)
+- I really suck at game design. I took this class because I thought I needed more expertise in a different box (and I really did.. game theory applies to SO much of general cs theory) but it really didn't work out because I'm better off a gamer than a game designer
+- System design does not apply to game design
 
 ## Future Changes
 If I were to keep developing on this game, here's what I would do:
