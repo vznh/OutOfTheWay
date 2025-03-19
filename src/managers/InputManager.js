@@ -1,8 +1,10 @@
+// InputManager.js
 class InputManager {
     constructor(scene) {
         this.scene = scene;
         this.isAnimating = false;
         this.lastDirection = null; // Tracks last movement direction for gas usage
+        this.lastPlayerPosition = { x: 0, y: 0 }; // Track last safe position
     }
 
     setupKeyboardInput() {
@@ -14,6 +16,9 @@ class InputManager {
             let isStayingStill = false;
             let isAccelerating = false;
             let direction = null;
+
+            // Store current position before movement
+            this.lastPlayerPosition = { x: this.scene.player.x, y: this.scene.player.y };
 
             switch (event.key.toLowerCase()) {
                 case "arrowup":
@@ -102,21 +107,27 @@ class InputManager {
                         return;
                     }
 
-                    // Check for collisions after movement
-                    this.scene.entityManager.collisionManager.checkEntityCollisions(this.scene.entityManager, this.scene.player);
-                    
                     if (!isAccelerating && !isStayingStill) {
                         this.scene.playerTurns++;
                         if (this.scene.playerTurns === 2 && !this.scene.entityManager.chickenSpawned) {
                             this.scene.entityManager.spawnChicken(this.scene.playerStartX, this.scene.playerStartY);
                         }
                         if (this.scene.playerTurns % 2 === 0) {
-                            this.scene.entityManager.updateEntities(this.scene.player);
+                            // Handle bus collisions by providing a callback
+                            this.scene.entityManager.updateEntities(this.scene.player, () => {
+                                // Move player back to last safe position if bus collision occurs
+                                this.scene.player.movePlayer(this.lastPlayerPosition.x, this.lastPlayerPosition.y, () => {
+                                    this.scene.uiManager.showWarningText("A bus blocked your path!");
+                                });
+                            });
                         }
-                        if (this.scene.playerTurns % 6 === 0 && Math.random() < 0.2) {
+                        if (this.scene.playerTurns % 6 === 0 && Math.random() < 0.3) {
                             this.scene.entityManager.spawnEmergencyVehicle();
                         }
                     }
+
+                    // Check for collisions after movement
+                    this.scene.entityManager.collisionManager.checkEntityCollisions(this.scene.entityManager, this.scene.player);
 
                     this.scene.time.delayedCall(250, () => {
                         this.isAnimating = false;

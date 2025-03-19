@@ -1,3 +1,4 @@
+// UIManager.js
 class UIManager {
     constructor(scene) {
         this.scene = scene;

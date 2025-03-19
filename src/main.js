@@ -1,12 +1,16 @@
 // main.js
-
-let game = new Phaser.Game({
+const config = {
   type: Phaser.AUTO,
-  width: 320,
-  height: 320,
-  scene: [MenuScene, GameScene],
+  width: 640,  // 10 squares * 64 pixels
+  height: 384, // 6 squares * 64 pixels
+  scene: [MenuScene, GameScene, CreditsScene],
   physics: {
     default: "arcade",
+    arcade: {
+      gravity: { y: 0 },
+      debug: false,
+    },
   },
-});
-let keyRESET;
+};
+
+const game = new Phaser.Game(config);

@@ -2,96 +2,109 @@
 class GameScene extends Phaser.Scene {
   constructor() {
     super("playScene");
+    this.playerTurns = 0;
   }
 
   preload() {
-    // Load the player sprite sheet using peter.png
-    this.load.image("player", "assets/peter.png", {
-      frameWidth: 128,
-      frameHeight: 128,
+    this.load.image("road", "assets/road.png");
+    this.load.image("player", "assets/peter.png");
+    this.load.image("car", "assets/car.png");
+    this.load.image("bus", "assets/bus.png");
+    this.load.image("emergency", "assets/evehicle.png");
+    this.load.image("pcar", "assets/pcar.png");
+    this.load.image("chicken", "assets/chicken.png");
+    this.load.spritesheet("explosion", "assets/explosion.png", { 
+      frameWidth: 256, 
+      frameHeight: 256 
     });
-
-    this.load.image("bus", "assets/bus.png", {
-      frameWidth: 128,
-      frameHeight: 128,
-    });
-
-    this.load.audio("boop", "assets/boop.mp3");
+    this.load.audio("move", "assets/boop.mp3");
+    this.load.audio("joeswanson", "assets/joeswanson.mp3");
+    this.load.audio("handicapped", "assets/handicapped.mp3");
+    this.load.audio("hooray", "assets/hooray.mp3");
+    this.load.audio("policesiren", "assets/policesiren.mp3");
+    this.load.audio("ambsiren", "assets/ambsiren.mp3");
+    this.load.audio("bye", "assets/bye.mp3");
   }
 
   create() {
-    // Set player's starting position to a random grid on left 2 columns
-    const randomRow = Phaser.Math.Between(2, 7);
-    const randomCol = Phaser.Math.Between(0, 1);
-    this.player = this.add.image(
-      16 + randomCol * 32,
-      16 + randomRow * 32,
-      "player",
-    );
-    this.physics.add.existing(this.player);
-    this.player.setScale(32 / 512);
+    const road = this.add.image(320, 192, "road");
+    road.setDisplaySize(640, 384);
 
-    // Add 3 bus entities randomly across the grid
-    this.buses = [];
-    for (let i = 0; i < 3; i++) {
-      const busRow = Phaser.Math.Between(0, 9);
-      const busCol = Phaser.Math.Between(2, 9); // Place buses on right side of grid
-      const bus = this.add.image(
-        16 + busCol * 32,
-        16 + busRow * 32,
-        "bus"
-      );
-      bus.setScale(32 / 512);
-      this.physics.add.existing(bus);
-      this.buses.push(bus);
-    }
+    const winZone = this.add.graphics();
+    winZone.fillStyle(0x00ff00, 0.1);
+    winZone.fillRect(576, 0, 64, 384);
 
-    // Draw a grid overlay for visual reference
-    const graphics = this.add.graphics();
-    graphics.lineStyle(1, 0xffffff, 0.3);
-    for (let x = 0; x <= 320; x += 32) {
-      graphics.moveTo(x, 0);
-      graphics.lineTo(x, 320);
-    }
-    for (let y = 0; y <= 320; y += 32) {
-      graphics.moveTo(0, y);
-      graphics.lineTo(320, y);
-    }
-    graphics.strokePath();
+    // Add ESC instruction text
+    const escText = this.add.text(620, 364, "Press ESC to return to Menu", {
+      fontSize: "16px",
+      fill: "#ffffff",
+      fontFamily: "Arial",
+      backgroundColor: "#000000",
+      padding: { x: 5, y: 2 },
+    }).setOrigin(1);
 
-    this.input.keyboard.on("keydown-ESC", () => {
-      this.scene.start("menuScene");
-      console.log("Attempted to escape back to menu");
+    // Create explosion animation
+    this.anims.create({
+      key: 'explode',
+      frames: this.anims.generateFrameNumbers('explosion', { start: 0, end: 5 }),
+      frameRate: 12,
+      repeat: 0
     });
 
-    // Listen for key presses for grid-based movement
-    this.input.keyboard.on("keydown", (event) => {
-      let newX = this.player.x;
-      let newY = this.player.y;
+    // Initialize sounds
+    this.winSound = this.sound.add('hooray', { loop: false, volume: 0.7 });
+    this.moveSound = this.sound.add('move', { loop: false, volume: 0.5 });
+    this.policeSound = this.sound.add('joeswanson', { loop: false, volume: 0.5 });
+    this.emergencySound = this.sound.add('handicapped', { loop: false, volume: 0.5 });
 
-      if (event.key === "ArrowUp") {
-        newY -= 32;
-      } else if (event.key === "ArrowDown") {
-        newY += 32;
-      } else if (event.key === "ArrowLeft") {
-        newX -= 32;
-      } else if (event.key === "ArrowRight") {
-        newX += 32;
-      } else {
-        return; // Ignore other keys
-      }
+    const randomLane = Phaser.Math.Between(0, 5);
+    const startX = 32;
+    const startY = 32 + randomLane * 64;
 
-      // Boundaries: player centers must stay between 16 and 304
-      if (newX >= 16 && newX <= 304 && newY >= 16 && newY <= 304) {
-        this.player.setPosition(newX, newY);
-        // Play move sound effect
-        this.sound.play("boop");
-        console.log("Move sound effect should play");
+    this.playerStartX = startX;
+    this.playerStartY = startY;
+
+    // Initialize managers
+    this.uiManager = new UIManager(this);
+    this.collisionManager = new CollisionManager(this, this.uiManager);
+    this.entityManager = new EntityManager(this, this.collisionManager);
+    this.inputManager = new InputManager(this);
+
+    // Create player
+    this.player = new Player(this, startX, startY);
+
+    // Initialize game state
+    this.entityManager.spawnInitialEntities();
+    this.inputManager.setupKeyboardInput();
+    this.uiManager.updateScoreDisplay(this.player.score);
+    this.uiManager.updateGasDisplay(this.player.gas);
+
+    // Add ESC key handler
+    this.input.keyboard.on('keydown-ESC', () => {
+      // Stop all sounds
+      this.sound.stopAll();
+      
+      // Stop all tweens
+      this.tweens.killAll();
+      
+      // Clear all entities
+      if (this.entityManager) {
+        this.entityManager.cars.forEach(car => car.destroy());
+        this.entityManager.buses.forEach(bus => bus.destroy());
+        this.entityManager.emergencyVehicles.forEach(ev => ev.destroy());
+        this.entityManager.policeCars.forEach(police => police.destroy());
+        if (this.entityManager.chicken) {
+          this.entityManager.chicken.destroy();
+        }
       }
+      
+      // Destroy player
+      if (this.player) {
+        this.player.destroy();
+      }
+      
+      // Switch to menu scene
+      this.scene.start('menuScene');
     });
-  }
-
-  update() {
-    // No continuous movement needed - movement is handled in key events.
   }
 }

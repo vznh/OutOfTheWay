@@ -5,51 +5,53 @@ class Car extends Phaser.GameObjects.Sprite {
         scene.physics.add.existing(this);
         
         this.setScale(96 / 512);
+        this.isMoving = false;
 
         // Ensure position is on grid
         this.x = Math.round(this.x / 64) * 64;
         this.y = Math.round(this.y / 64) * 64;
     }
 
-    moveCar(newX, newY, onComplete) {
-        this.scene.tweens.add({
+    randomMove() {
+        const directions = [
+            { x: this.x + 64, y: this.y },  // right
+            { x: this.x - 64, y: this.y },  // left
+            { x: this.x, y: this.y + 64 },  // down
+            { x: this.x, y: this.y - 64 }   // up
+        ];
+
+        return directions[Math.floor(Math.random() * directions.length)];
+    }
+
+    moveCar(x, y, onComplete = null) {
+        if (this.isMoving || !this.scene || !this.scene.tweens) return;
+        
+        this.isMoving = true;
+        
+        // Store the tween reference
+        this.currentTween = this.scene.tweens.add({
             targets: this,
-            x: newX,
-            y: newY,
-            duration: 200,
+            x: x,
+            y: y,
+            duration: 500,
             ease: 'Linear',
             onComplete: () => {
-                // Ensure final position is on grid
-                this.x = Math.round(this.x / 64) * 64;
-                this.y = Math.round(this.y / 64) * 64;
-                if (onComplete) onComplete();
+                this.isMoving = false;
+                // Clear the tween reference
+                this.currentTween = null;
+                if (onComplete && this.scene) {
+                    onComplete();
+                }
             }
         });
     }
 
-    randomMove() {
-        const possibleMoves = [
-            { dx: 0, dy: -64 },
-            { dx: 0, dy: 64 },
-            { dx: -64, dy: 0 },
-            { dx: 64, dy: 0 }
-        ];
-        
-        const move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-        const newX = this.x + move.dx;
-        const newY = this.y + move.dy;
-        
-        // Check boundaries
-        if (newX >= 32 && newX <= 608 && newY >= 32 && newY <= 352) {
-            return {
-                x: Math.round(newX / 64) * 64,
-                y: Math.round(newY / 64) * 64
-            };
+    destroy(fromScene) {
+        // Cancel any ongoing tween
+        if (this.currentTween) {
+            this.currentTween.stop();
+            this.currentTween = null;
         }
-        
-        return {
-            x: this.x,
-            y: this.y
-        };
+        super.destroy(fromScene);
     }
 } 
